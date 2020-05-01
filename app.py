@@ -4,14 +4,13 @@ import re
 from sql import cursor, conn
 from constants import text_for_admins, text_for_users, format_of_write, exist, no_medicines_with_this_name, states, admins_id, medicines_message
 
-global keyboard
 def send_message(user_id,message):                                                                            #функция , которая отвечает за отправление сообщения
     keyboard = create_keyboard(user_id)
     vk_session.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': 0, 'keyboard': keyboard})
 
 
 def create_keyboard(user_id):                                                                                         # функция создания клавиатуры
-    keyboard = VkKeyboard(one_time=True)
+    keyboard = VkKeyboard(one_time=False)
     if states[user_id] == "menu":
         keyboard.add_button('Поиск', color=VkKeyboardColor.PRIMARY)
         keyboard.add_button('Поиск по ав', color=VkKeyboardColor.PRIMARY)
