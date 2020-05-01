@@ -2,10 +2,15 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vkapi import vk_session, longpoll,VkEventType
 import re
 from sql import cursor, conn
-from constants import text_for_admins, text_for_users, format_of_write, exist, no_medicines_with_this_name, states, admins_id, medicines_message
+from constants import texts, states, admins_id, medicines_message
 
 def send_message(user_id,message):                                                                            #функция , которая отвечает за отправление сообщения
     keyboard = create_keyboard(user_id)
+    if message == "handle_admin":
+        if user_id in admins_id:
+            message = texts["text_for_admins"]
+        else:
+            message = texts["text_for_users"]    
     vk_session.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': 0, 'keyboard': keyboard})
 
 
@@ -61,7 +66,7 @@ def handle_edit():                                                              
         return
     medicines_message[event.user_id] = cursor_fetchall_edit[0][1]
     states[event.user_id] = "edition"
-    send_message(event.user_id, format_of_write)
+    send_message(event.user_id, texts["format_of_write"])
 
 def handle_edittion():                                                                                         # изменение
     regular = re.findall(r"(.+?)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)",event.text)
@@ -87,11 +92,11 @@ def handle_search_as():                                                         
     cursor.execute(f"SELECT * FROM medicines WHERE active_substance LIKE '%{event.text}%'")
     text = cursor.fetchall()
     if event.text == '':
-        send_message(event.user_id, exist)
+        send_message(event.user_id, texts["exist"])
         return
     else:
         if text == []:                                                                       # проверка есть ли препарат с таким активным веществом в базе
-            send_message(event.user_id, no_medicines_with_this_name)
+            send_message(event.user_id, texts["no_medicines_with_this_name"])
             states[event.user_id] = "search_as"
             return
         for x in range(len(list(text))):
@@ -108,18 +113,16 @@ def handle_search_as():                                                         
     states[event.user_id] = "menu"
     send_message(event.user_id, message_of_search_as)
     
-    
-
 def handle_search():                                                                                           # функция для поиска по названию
     search_as_sql = f"SELECT * FROM medicines WHERE medicines_name LIKE '{event.text}%'COLLATE NOCASE"
     cursor.execute(search_as_sql)
     text = cursor.fetchall()
     if event.text == '':
-        send_message(event.user_id, exist)
+        send_message(event.user_id, text["exist"])
         return
     else:
         if text == []:
-            send_message(event.user_id, no_medicines_with_this_name)                        # проверка есть ли такой препарат в базе
+            send_message(event.user_id, texts["no_medicines_with_this_name"])                        # проверка есть ли такой препарат в базе
             states[event.user_id] = "search"
             return
         for x in range(len(list(text))):
@@ -150,6 +153,31 @@ def handle_delete():                                                            
     states[event.user_id] = "menu"
     send_message(event.user_id, "Удалено")
 
+def handle_menu(response):
+    if response == "меню":
+        states[event.user_id] = "menu"
+        send_message(event.user_id, "handle_admin")
+    elif response == "запись" and event.user_id in admins_id:
+        states[event.user_id] = "write"
+        send_message(event.user_id, texts["format_of_write"])
+    elif response == "изменить" and event.user_id in admins_id:
+        states[event.user_id] = "edit"
+        send_message(event.user_id, "Введите название препарата, который хотите изменить.")
+    elif response == "поиск по ав":
+        states[event.user_id] = "search_as"
+        send_message(event.user_id, "Введите название действующего вещества,которое хотите посмотреть.")
+    elif response == "поиск":
+        states[event.user_id] = "search"
+        send_message(event.user_id, "Введите название препарата ,которое хотите посмотреть.")
+    elif response == "удалить"and event.user_id in admins_id:
+        states[event.user_id] = "delete"
+        send_message(event.user_id, "Введите название препарата ,которое хотите удалить.")    
+    else:
+        send_message(event.user_id,texts["exist"]) 
+
+
+
+
 
 while True:
     for event in longpoll.listen():
@@ -160,50 +188,9 @@ while True:
                     states[event.user_id] = "menu"
                 if response == "отмена":
                     states[event.user_id] = "menu"
-                    keyboard = create_keyboard(event.user_id)
-                    if event.user_id in admins_id:
-                        send_message(event.user_id, text_for_admins)
-                    else:
-                        send_message(event.user_id, text_for_users)
+                    send_message(event.user_id, "handle_admin")
                 elif states[event.user_id] == "menu":
-                    if response == "меню":
-                        states[event.user_id] = "menu"
-                        keyboard = create_keyboard(event.user_id)
-                        if event.user_id in admins_id:
-                            send_message(event.user_id, text_for_admins)
-                        else:
-                            send_message(event.user_id, text_for_users)
-                    elif response == "запись":
-                        states[event.user_id] = "write"
-                        keyboard = create_keyboard(event.user_id)
-                        if event.user_id in admins_id:
-                            send_message(event.user_id, format_of_write)
-                        else:
-                            send_message(event.user_id, exist)
-                    elif response == "изменить":
-                        states[event.user_id] = "edit"
-                        keyboard = create_keyboard(event.user_id)
-                        if event.user_id in admins_id:
-                            send_message(event.user_id, "Введите название препарата, который хотите изменить.")
-                        else:
-                            send_message(event.user_id, exist)
-                    elif response == "поиск по ав":
-                        states[event.user_id] = "search_as"
-                        keyboard = create_keyboard(event.user_id)
-                        send_message(event.user_id, "Введите название действующего вещества,которое хотите посмотреть.")
-                    elif response == "поиск":
-                        states[event.user_id] = "search"
-                        keyboard = create_keyboard(event.user_id)
-                        send_message(event.user_id, "Введите название препарата ,которое хотите посмотреть.")
-                    elif response == "удалить":
-                        states[event.user_id] = "delete"
-                        keyboard = create_keyboard(event.user_id)
-                        if event.user_id in admins_id:
-                            send_message(event.user_id, "Введите название препарата ,которое хотите удалить.")    
-                        else:
-                            send_message(event.user_id, exist)
-                    else:
-                        send_message(event.user_id, exist)
+                    handle_menu(response)
                 elif states[event.user_id] == "write":                                                  
                     handle_write()                                                                       
                 elif states[event.user_id] == "edit":                                                   
