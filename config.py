@@ -2,7 +2,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vkapi import vk_session, longpoll,VkEventType
 import re
 from sql import cursor, conn
-from constants import text_for_admins, text_for_users, format_of_write, exist, no_aids_with_this_name, states, admins_id, aids_message
+from constants import text_for_admins, text_for_users, format_of_write, exist, no_medicines_with_this_name, states, admins_id, medicines_message
 
 
 def send_message(user_id, message):              #функция , которая отвечает за отправление сообщения
@@ -84,12 +84,12 @@ while True:
                     if len(list(regular)) == 0:                                                        # проверка правильности ввода.
                         send_message(event.user_id, "Не правильный формат.")
                         continue
-                    sql_write = "SELECT * FROM aids WHERE aids_name =?"
+                    sql_write = "SELECT * FROM medicines WHERE medicines_name =?"
                     cursor.execute(sql_write, [(regular[0][1])])
                     cursor_fetchall = cursor.fetchall()
                     if cursor_fetchall == []:
                         for i in range(len(list(regular))):
-                            cursor.execute(f"""INSERT INTO aids VALUES ("{regular[i][0]}",
+                            cursor.execute(f"""INSERT INTO medicines VALUES ("{regular[i][0]}",
                                                                         "{regular[i][1]}",
                                                                         "{regular[i][2]}",
                                                                         "{regular[i][3]}",
@@ -105,20 +105,20 @@ while True:
                     else:
                         send_message(event.user_id, "Такое лекарство уже есть.")
                 elif states[event.user_id] == "edit":                                                    # Цикл для изменения параметров припарата
-                        cursor.execute(f"SELECT * FROM aids WHERE aids_name LIKE '%{event.text}%'")
+                        cursor.execute(f"SELECT * FROM medicines WHERE medicines_name LIKE '%{event.text}%'")
                         cursor_fetchall_edit = cursor.fetchall()
                         if cursor_fetchall_edit == []:                                                                  # Проверка есть ли такой препарат в базе
                             send_message(event.user_id, "Нет такого препарата попробуйте еще раз.")
                             continue
-                        aids_message[event.user_id] = cursor_fetchall_edit[0][1]
+                        medicines_message[event.user_id] = cursor_fetchall_edit[0][1]
                         states[event.user_id] = "edition"
                         send_message(event.user_id, format_of_write)
                 elif states[event.user_id] == "edition":                                                 # изменение
                     regular = re.findall(r"(.+?)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)",event.text)
                     for i in range(len(list(regular))):
-                        cursor.execute(f"""UPDATE aids SET
+                        cursor.execute(f"""UPDATE medicines SET
                                         active_substance = "{regular[i][0]}",
-                                        aids_name = "{regular[i][1]}",
+                                        medicines_name = "{regular[i][1]}",
                                         farm_group = "{regular[i][2]}",
                                         release_form = "{regular[i][3]}",
                                         target = "{regular[i][4]}",
@@ -127,16 +127,16 @@ while True:
                                         ways_to_use = "{regular[i][7]}",
                                         how_often = "{regular[i][8]}",
                                         source = "{regular[i][9]}",
-                                        WHERE aids_name ="{aids_message[event.user_id]}" """
+                                        WHERE medicines_name ="{medicines_message[event.user_id]}" """
                                        )
                         conn.commit()
                         send_message(event.user_id, "Изменено")
                         states[event.user_id] = "menu"
                 elif states[event.user_id] == "search_as":                                 # Цикл для поиска по активному веществу
-                    cursor.execute(f"SELECT * FROM aids WHERE active_substance LIKE '%{event.text}%'")
+                    cursor.execute(f"SELECT * FROM medicines WHERE active_substance LIKE '%{event.text}%'")
                     text = cursor.fetchall()
                     if text == []:                                                                 # проверка есть ли препарат с таким активным веществом в базе
-                        send_message(event.user_id, no_aids_with_this_name)
+                        send_message(event.user_id, no_medicines_with_this_name)
                         states[event.user_id] = "search_as"
                         continue
                     for x in range(len(list(text))):
@@ -154,11 +154,11 @@ while True:
                         send_message(event.user_id, message_of_search_as)
                     states[event.user_id] = "menu"    
                 elif states[event.user_id] == "search":                                  # Цикл для поиска по названию препарата
-                    search_as_sql = f"SELECT * FROM aids WHERE aids_name LIKE '{event.text}%'COLLATE NOCASE"
+                    search_as_sql = f"SELECT * FROM medicines WHERE medicines_name LIKE '{event.text}%'COLLATE NOCASE"
                     cursor.execute(search_as_sql)
                     text = cursor.fetchall()
                     if text == []:
-                        send_message(event.user_id, no_aids_with_this_name)                        # проверка есть ли такой препарат в базе
+                        send_message(event.user_id, no_medicines_with_this_name)                        # проверка есть ли такой препарат в базе
                         states[event.user_id] = "search"
                         continue
                     for x in range(len(list(text))):
@@ -176,14 +176,14 @@ while True:
                         send_message(event.user_id, message_of_search_as)
                         
                 elif states[event.user_id] == "delete":                               # Цикл для удаления препарата по названию
-                    sql_delete = "SELECT * FROM aids WHERE aids_name =?"
+                    sql_delete = "SELECT * FROM medicines WHERE medicines_name =?"
                     cursor.execute(sql_delete, [(event.text)])
                     cursor_fetchall_delte = cursor.fetchall()
                     if cursor_fetchall_delte == []:                                           # проверка есть ли такой препарат в базе
                         send_message(event.user_id, "Нет такого препарата попробуйте еще раз.")
                         states[event.user_id] = "menu"
                         continue
-                    sql_delete = "DELETE FROM aids WHERE aids_name =?"
+                    sql_delete = "DELETE FROM medicines WHERE medicines_name =?"
                     cursor.execute(sql_delete, ([event.text]))
                     conn.commit()
                     states[event.user_id] = "menu"
