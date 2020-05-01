@@ -8,3 +8,4 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS medicines(active_substance text, me
                                                 target text,animal text,
                                                 dosage text,ways_to_use text,                                
                                                 how_often text,source text)""")
+                                                
