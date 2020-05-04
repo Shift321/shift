@@ -1,7 +1,8 @@
 from vkapi import longpoll
 from functions import *
 from vk_api.longpoll import VkEventType
-
+from sql import create_data_base
+create_data_base()
 while True:                                                                                                    # Основной цикл
     for event in longpoll.listen():
         if event.from_user and not event.from_me:

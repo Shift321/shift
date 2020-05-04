@@ -29,7 +29,7 @@ def create_keyboard(user_id):                                                   
     return keyboard
 
 def handle_write(event):                                                                                            # функция для записи нового препарата
-    regular = re.findall(r"(.+?)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)",event.text) 
+    regular = re.findall(r"(.+?)\:(.+)\:(.+)",event.text) 
     if len(list(regular)) == 0:                                                                                # проверка правильности ввода.
         send_message(event.user_id, "Не правильный формат.")
         return
@@ -39,15 +39,8 @@ def handle_write(event):                                                        
     if cursor_fetchall == []:
         for i in range(len(list(regular))):
             cursor.execute(f"""INSERT INTO medicines VALUES ("{regular[i][0]}",
-                                                        "{regular[i][1]}",
-                                                        "{regular[i][2]}",
-                                                        "{regular[i][3]}",
-                                                        "{regular[i][4]}",
-                                                        "{regular[i][5]}",
-                                                        "{regular[i][6]}",
-                                                        "{regular[i][7]}",
-                                                        "{regular[i][8]}",
-                                                        "{regular[i][9]}")""")
+                                                             "{regular[i][1]}",
+                                                             "{regular[i][2]}")""")
             conn.commit()
             states[event.user_id] = "menu"
             send_message(event.user_id, "Записано.")
@@ -68,19 +61,12 @@ def handle_edit(event):                                                         
     send_message(event.user_id, texts["format_of_write"])
 
 def handle_edittion(event):                                                                                         # изменение
-    regular = re.findall(r"(.+?)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)\:(.+)",event.text)
+    regular = re.findall(r"(.+?)\:(.+)\:(.+)",event.text)
     for i in range(len(list(regular))):
         cursor.execute(f"""UPDATE medicines SET
                         active_substance = "{regular[i][0]}",
                         medicines_name = "{regular[i][1]}",
-                        farm_group = "{regular[i][2]}",
-                        release_form = "{regular[i][3]}",
-                        target = "{regular[i][4]}",
-                        animal = "{regular[i][5]}",
-                        dosage = "{regular[i][6]}",
-                        ways_to_use = "{regular[i][7]}",
-                        how_often = "{regular[i][8]}",
-                        source = "{regular[i][9]}",
+                        info_of_medicines = "{regular[i][2]}"
                         WHERE medicines_name ="{medicines_message[event.user_id]}" """
                         )
     conn.commit()
