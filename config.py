@@ -1,10 +1,12 @@
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vkapi import vk_session
+from vk_api.longpoll import VkEventType
 import re
 from sql import cursor, conn
 from constants import texts, states, admins_id, medicines_message
 
-def send_message(user_id,message):                                                                            #функция , которая отвечает за отправление сообщения
+
+def send_message(user_id,  message):                                                                            #функция , которая отвечает за отправление сообщения
     keyboard = create_keyboard(user_id)
     if message == "handle_admin":
         if user_id in admins_id:
@@ -12,6 +14,7 @@ def send_message(user_id,message):                                              
         else:
             message = texts["text_for_users"]    
     vk_session.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': 0, 'keyboard': keyboard})
+
 
 def create_keyboard(user_id):                                                                                  # функция создания клавиатуры
     keyboard = VkKeyboard(one_time=False)
@@ -28,8 +31,9 @@ def create_keyboard(user_id):                                                   
     keyboard = keyboard.get_keyboard()
     return keyboard
 
+
 def handle_write(event):                                                                                            # функция для записи нового препарата
-    regular = re.findall(r"(.+?)\:(.+)\:(.+)",event.text) 
+    regular = re.findall(r"(.+?)\:(.+)\:(.+)", event.text)
     if len(list(regular)) == 0:                                                                                # проверка правильности ввода.
         send_message(event.user_id, "Не правильный формат.")
         return
@@ -44,11 +48,9 @@ def handle_write(event):                                                        
             conn.commit()
             states[event.user_id] = "menu"
             send_message(event.user_id, "Записано.")
-            
-            
     else:
-        
-        send_message(event.user_id, "Такое лекарство уже есть.")   
+        send_message(event.user_id, "Такое лекарство уже есть.")
+
 
 def handle_edit(event):                                                                                             # функция для изменения параметров припарата
     cursor.execute(f"SELECT * FROM medicines WHERE medicines_name LIKE '%{event.text}%'")
@@ -59,6 +61,7 @@ def handle_edit(event):                                                         
     medicines_message[event.user_id] = cursor_fetchall_edit[0][1]
     states[event.user_id] = "edition"
     send_message(event.user_id, texts["format_of_write"])
+
 
 def handle_edittion(event):                                                                                         # изменение
     regular = re.findall(r"(.+?)\:(.+)\:(.+)",event.text)
@@ -72,7 +75,8 @@ def handle_edittion(event):                                                     
     conn.commit()
     states[event.user_id] = "menu"
     send_message(event.user_id, "Изменено")
-    
+
+
 def handle_search_as(event):                                                                                        # функция для поиска по активному веществу
     cursor.execute(f"SELECT * FROM medicines WHERE active_substance LIKE '%{event.text}%'")
     text = cursor.fetchall()
@@ -90,7 +94,8 @@ def handle_search_as(event):                                                    
                                         Описание: {text[x][2]}"""
     states[event.user_id] = "menu"
     send_message(event.user_id, message_of_search_as)
-    
+
+
 def handle_search(event):                                                                                           # функция для поиска по названию
     search_as_sql = f"SELECT * FROM medicines WHERE medicines_name LIKE '{event.text}%'COLLATE NOCASE"
     cursor.execute(search_as_sql)
@@ -110,6 +115,7 @@ def handle_search(event):                                                       
     states[event.user_id] = "menu"
     send_message(event.user_id, message_of_search_as)
 
+
 def handle_delete(event):                                                                                           # функция для удаления 
     sql_delete = "SELECT * FROM medicines WHERE medicines_name =?"
     cursor.execute(sql_delete, [(event.text)])
@@ -124,7 +130,8 @@ def handle_delete(event):                                                       
     states[event.user_id] = "menu"
     send_message(event.user_id, "Удалено")
 
-def handle_menu(response,event):                                                                                     # меню
+
+def handle_menu(response, event):                                                                                     # меню
     if response == "меню":
         states[event.user_id] = "menu"
         send_message(event.user_id, "handle_admin")
@@ -145,3 +152,28 @@ def handle_menu(response,event):                                                
         send_message(event.user_id, "Введите название препарата ,которое хотите удалить.")    
     else:
         send_message(event.user_id,texts["exist"]) 
+
+
+async def chose_handler(event):
+    if event.from_user and not event.from_me:
+        if event.type == VkEventType.MESSAGE_NEW:
+            response = event.text.lower()
+            if event.user_id not in states:
+                states[event.user_id] = "menu"
+                if response == "отмена":
+                    states[event.user_id] = "menu"
+                    send_message(event.user_id, "handle_admin")
+                elif states[event.user_id] == "menu":
+                    handle_menu(response, event)
+                elif states[event.user_id] == "write":
+                    handle_write(event)
+                elif states[event.user_id] == "edit":
+                    handle_edit(event)
+                elif states[event.user_id] == "edition":                                                # изменение
+                    handle_edittion(event)
+                elif states[event.user_id] == "search_as":                                              # функция для поиска по активному веществу
+                    handle_search_as(event)
+                elif states[event.user_id] == "search":                                                 # функция для поиска по названию препарата
+                    handle_search(event)
+                elif states[event.user_id] == "delete":                                                 # функция для удаления препарата по названию
+                    handle_delete(event)
