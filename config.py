@@ -4,8 +4,8 @@ from vk_api.longpoll import VkEventType
 import re
 from sql import cursor, conn
 from constants import texts, states, admins_id, medicines_message
-
-
+from vkapi import longpoll
+import asyncio
 def send_message(user_id,  message):                                                                            #функция , которая отвечает за отправление сообщения
     keyboard = create_keyboard(user_id)
     if message == "handle_admin":
@@ -177,3 +177,8 @@ async def chose_handler(event):
                     handle_search(event)
                 elif states[event.user_id] == "delete":                                                 # функция для удаления препарата по названию
                     handle_delete(event)
+
+def app():
+    while True:                                                                                                    # Основной цикл
+        for event in longpoll.listen():
+            asyncio.run(chose_handler(event))
