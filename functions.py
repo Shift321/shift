@@ -87,14 +87,7 @@ def handle_search_as(event):                                                    
         for x in range(len(list(text))):
             message_of_search_as = f"""Действущее вещество: {text[x][0]}
                                         Название препарата: {text[x][1]}
-                                        Форма выпуска: {text[x][2]}
-                                        Фарм группа: {text[x][3]}
-                                        Цель использования: {text[x][4]}
-                                        Вид животного: {text[x][5]}
-                                        Доза: {text[x][6]}
-                                        Путь введения: {text[x][7]}
-                                        Кратность: {text[x][8]}
-                                        Источник: {text[x][9]}"""
+                                        Описание: {text[x][2]}"""
     states[event.user_id] = "menu"
     send_message(event.user_id, message_of_search_as)
     
@@ -113,14 +106,7 @@ def handle_search(event):                                                       
         for x in range(len(list(text))):
             message_of_search_as = f"""Действущее вещество: {text[x][0]}
                                         Название препарата: {text[x][1]}
-                                        Форма выпуска: {text[x][2]}
-                                        Фарм группа: {text[x][3]}
-                                        Цель использования: {text[x][4]}
-                                        Вид животного: {text[x][5]}
-                                        Доза: {text[x][6]}
-                                        Путь введения: {text[x][7]}
-                                        Кратность: {text[x][8]}
-                                        Источник: {text[x][9]}"""
+                                        Описание: {text[x][2]}"""
     states[event.user_id] = "menu"
     send_message(event.user_id, message_of_search_as)
 
