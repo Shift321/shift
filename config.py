@@ -6,6 +6,7 @@ from sql import cursor, conn
 from constants import texts, states, admins_id, medicines_message
 from vkapi import longpoll
 import asyncio
+
 def send_message(user_id,  message):                                                                            #функция , которая отвечает за отправление сообщения
     keyboard = create_keyboard(user_id)
     if message == "handle_admin":
@@ -160,23 +161,24 @@ async def chose_handler(event):
             response = event.text.lower()
             if event.user_id not in states:
                 states[event.user_id] = "menu"
-                if response == "отмена":
-                    states[event.user_id] = "menu"
-                    send_message(event.user_id, "handle_admin")
-                elif states[event.user_id] == "menu":
-                    handle_menu(response, event)
-                elif states[event.user_id] == "write":
-                    handle_write(event)
-                elif states[event.user_id] == "edit":
-                    handle_edit(event)
-                elif states[event.user_id] == "edition":                                                # изменение
-                    handle_edittion(event)
-                elif states[event.user_id] == "search_as":                                              # функция для поиска по активному веществу
-                    handle_search_as(event)
-                elif states[event.user_id] == "search":                                                 # функция для поиска по названию препарата
-                    handle_search(event)
-                elif states[event.user_id] == "delete":                                                 # функция для удаления препарата по названию
-                    handle_delete(event)
+            if response == "отмена":
+                states[event.user_id] = "menu"
+                send_message(event.user_id, "handle_admin")
+            elif states[event.user_id] == "menu":
+                handle_menu(response, event)
+            elif states[event.user_id] == "write":
+                handle_write(event)
+            elif states[event.user_id] == "edit":
+                handle_edit(event)
+            elif states[event.user_id] == "edition":                                                # изменение
+                handle_edittion(event)
+            elif states[event.user_id] == "search_as":                                              # функция для поиска по активному веществу
+                handle_search_as(event)
+            elif states[event.user_id] == "search":                                                 # функция для поиска по названию препарата
+                handle_search(event)
+            elif states[event.user_id] == "delete":                                                 # функция для удаления препарата по названию
+                handle_delete(event)
+    
 
 def app():
     while True:                                                                                                    # Основной цикл
