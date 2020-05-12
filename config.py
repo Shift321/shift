@@ -7,7 +7,8 @@ from constants import texts, states, admins_id, medicines_message
 from vkapi import longpoll
 import asyncio
 
-def send_message(user_id,  message):                                                                            #функция , которая отвечает за отправление сообщения
+
+def send_message(user_id,  message):                                                                               # функция , которая отвечает за отправление сообщения
     keyboard = create_keyboard(user_id)
     if message == "handle_admin":
         if user_id in admins_id:
@@ -17,7 +18,7 @@ def send_message(user_id,  message):                                            
     vk_session.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': 0, 'keyboard': keyboard})
 
 
-def create_keyboard(user_id):                                                                                  # функция создания клавиатуры
+def create_keyboard(user_id):                                                                                      # функция создания клавиатуры
     keyboard = VkKeyboard(one_time=False)
     if states[user_id] == "menu":
         keyboard.add_button('Поиск', color=VkKeyboardColor.PRIMARY)
@@ -34,7 +35,7 @@ def create_keyboard(user_id):                                                   
 
 
 def handle_write(event):                                                                                            # функция для записи нового препарата
-    regular = re.findall(r"(.+?)\:(.+)\:(.+)", event.text)
+    regular = re.findall(r"([^:]+):[\n]*([^:]+):[\n]*([^\'\']+)", event.text)
     if len(list(regular)) == 0:                                                                                # проверка правильности ввода.
         send_message(event.user_id, "Не правильный формат.")
         return
@@ -65,7 +66,7 @@ def handle_edit(event):                                                         
 
 
 def handle_edittion(event):                                                                                         # изменение
-    regular = re.findall(r"(.+?)\:(.+)\:(.+)",event.text)
+    regular = re.findall(r"([^\:]+):[\n]*([^\:]+):[\n]*([^]+)",event.text)
     for i in range(len(list(regular))):
         cursor.execute(f"""UPDATE medicines SET
                         active_substance = "{regular[i][0]}",
