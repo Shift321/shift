@@ -66,7 +66,7 @@ def handle_edit(event):                                                         
 
 
 def handle_edittion(event):                                                                                         # изменение
-    regular = re.findall(r"([^\:]+):[\n]*([^\:]+):[\n]*([^]+)",event.text)
+    regular = re.findall(r"([^:]+):[\n]*([^:]+):[\n]*([^\'\']+)",event.text)
     for i in range(len(list(regular))):
         cursor.execute(f"""UPDATE medicines SET
                         active_substance = "{regular[i][0]}",
@@ -87,7 +87,7 @@ def handle_search_as(event):                                                    
         return
     else:
         if text == []:                                                                       # проверка есть ли препарат с таким активным веществом в базе
-            send_message(event.user_id, texts["no_medicines_with_this_name"])
+            send_message(event.user_id, texts["no_medicines_with_this_av_name"])
             states[event.user_id] = "search_as"
             return
         for x in range(len(list(text))):
@@ -99,7 +99,7 @@ def handle_search_as(event):                                                    
 
 
 def handle_search(event):                                                                                           # функция для поиска по названию
-    search_as_sql = f"SELECT * FROM medicines WHERE medicines_name LIKE '{event.text}%'COLLATE NOCASE"
+    search_as_sql = f"SELECT * FROM medicines WHERE medicines_name LIKE '%{event.text}%'"
     cursor.execute(search_as_sql)
     text = cursor.fetchall()
     if event.text == '':
