@@ -91,9 +91,7 @@ def handle_search_as(event):                                                    
             states[event.user_id] = "search_as"
             return
         for x in range(len(list(text))):
-            message_of_search_as = f"""Действущее вещество: {text[x][0]}
-                                        Название препарата: {text[x][1]}
-                                        Описание: {text[x][2]}"""
+            message_of_search_as =f"""Действущее вещество: {text[x][0]}\nНазвание препарата: {text[x][1]}\nОписание: {text[x][2]}"""
     states[event.user_id] = "menu"
     send_message(event.user_id, message_of_search_as)
 
@@ -111,9 +109,7 @@ def handle_search(event):                                                       
             states[event.user_id] = "search"
             return
         for x in range(len(list(text))):
-            message_of_search_as = f"""Действущее вещество: {text[x][0]}
-                                        Название препарата: {text[x][1]}
-                                        Описание: {text[x][2]}"""
+            message_of_search_as = f"""Действущее вещество: {text[x][0]}\nНазвание препарата: {text[x][1]}\nОписание: {text[x][2]}"""
     states[event.user_id] = "menu"
     send_message(event.user_id, message_of_search_as)
 
@@ -161,6 +157,7 @@ async def chose_handler(event):
         if event.type == VkEventType.MESSAGE_NEW:
             response = event.text.lower()
             if event.user_id not in states:
+                print(event.user_id)
                 states[event.user_id] = "menu"
             if response == "отмена":
                 states[event.user_id] = "menu"
