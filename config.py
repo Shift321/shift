@@ -7,7 +7,7 @@ from constants import texts, states, admins_id, medicines_message
 from vkapi import longpoll,get_full_name
 import asyncio
 from datetime import datetime
-from textwrap import wrap,fill
+
 
 
 def send_message(user_id,  message):                                                                               # функция , которая отвечает за отправление сообщения
@@ -152,16 +152,12 @@ def handle_menu(response, event):                                               
         states[event.user_id] = "delete"
         send_message(event.user_id, "Введите название препарата ,которое хотите удалить.")    
     elif response == "cписок":
-        cursor.execute("SELECT * FROM medicines order by active_substance ASC")
+        cursor.execute("SELECT active_substance FROM medicines order by active_substance ASC")
+        names = cursor.fetchall()
         msg = ""
-        while True:
-            row = cursor.fetchone()
-            if row == None:
-                break
-            msg += f"{row[1]}\n"
-        messages = wrap(msg,4096,replace_whitespace=False)
-        for x in messages:
-            send_message(event.user_id,x) 
+        for x in names:
+            msg += ''.join(x)+"\n"
+        send_message(event.user_id,msg)
     else:
         send_message(event.user_id,texts["exist"]) 
 
@@ -169,9 +165,9 @@ def handle_menu(response, event):                                               
 async def chose_handler(event):
     if event.from_user and not event.from_me:
         if event.type == VkEventType.MESSAGE_NEW:
-            print("Сообщение пришло в :" + str(datetime.strftime(datetime.now(),"%H:%M:%S")))
-            print('Текст сообщения:' + str(event.text))
-            get_full_name(event)
+            # print("Сообщение пришло в :" + str(datetime.strftime(datetime.now(),"%H:%M:%S")))
+            # print('Текст сообщения:' + str(event.text))
+            # get_full_name(event)
             response = event.text.lower()
             if event.user_id not in states:
                 states[event.user_id] = "menu"
