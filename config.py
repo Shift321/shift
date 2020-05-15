@@ -4,7 +4,7 @@ from vk_api.longpoll import VkEventType
 import re
 from sql import cursor, conn
 from constants import texts, states, admins_id, medicines_message
-from vkapi import longpoll
+from vkapi import longpoll,get_full_name
 import asyncio
 from datetime import datetime
 from textwrap import wrap,fill
@@ -25,9 +25,10 @@ def create_keyboard(user_id):                                                   
     if states[user_id] == "menu":
         keyboard.add_button('Поиск', color=VkKeyboardColor.PRIMARY)
         keyboard.add_button('Поиск по ав', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_button('Cписок', color=VkKeyboardColor.PRIMARY)
         if user_id in admins_id:
-                keyboard.add_button('Запись', color=VkKeyboardColor.PRIMARY)
                 keyboard.add_line()
+                keyboard.add_button('Запись', color=VkKeyboardColor.PRIMARY)
                 keyboard.add_button('Изменить', color=VkKeyboardColor.PRIMARY)
                 keyboard.add_button('удалить', color=VkKeyboardColor.PRIMARY)
     else:
@@ -142,6 +143,15 @@ def handle_menu(response, event):                                               
         states[event.user_id] = "edit"
         send_message(event.user_id, "Введите название препарата, который хотите изменить.")
     elif response == "поиск по ав":
+        states[event.user_id] = "search_as"
+        send_message(event.user_id, "Введите название действующего вещества,которое хотите посмотреть.")
+    elif response == "поиск":
+        states[event.user_id] = "search"
+        send_message(event.user_id, "Введите название препарата ,которое хотите посмотреть.")
+    elif response == "удалить"and event.user_id in admins_id:
+        states[event.user_id] = "delete"
+        send_message(event.user_id, "Введите название препарата ,которое хотите удалить.")    
+    elif response == "cписок":
         cursor.execute("SELECT * FROM medicines order by active_substance ASC")
         msg = ""
         while True:
@@ -151,25 +161,7 @@ def handle_menu(response, event):                                               
             msg += f"{row[1]}\n"
         messages = wrap(msg,4096,replace_whitespace=False)
         for x in messages:
-            send_message(event.user_id,x)
-        states[event.user_id] = "search_as"
-        send_message(event.user_id, "Введите название действующего вещества,которое хотите посмотреть.")
-    elif response == "поиск":
-        cursor.execute("SELECT * FROM medicines order by medicines_name ASC")
-        msg = ""
-        while True:
-            row = cursor.fetchone()
-            if row == None:
-                break
-            msg += f"{row[1]}\n"
-            messages = wrap(msg,4096,replace_whitespace=False)
-            for x in messages:
-                send_message(event.user_id,x)
-        states[event.user_id] = "search"
-        send_message(event.user_id, "Введите название препарата ,которое хотите посмотреть.")
-    elif response == "удалить"and event.user_id in admins_id:
-        states[event.user_id] = "delete"
-        send_message(event.user_id, "Введите название препарата ,которое хотите удалить.")    
+            send_message(event.user_id,x) 
     else:
         send_message(event.user_id,texts["exist"]) 
 
@@ -179,6 +171,7 @@ async def chose_handler(event):
         if event.type == VkEventType.MESSAGE_NEW:
             print("Сообщение пришло в :" + str(datetime.strftime(datetime.now(),"%H:%M:%S")))
             print('Текст сообщения:' + str(event.text))
+            get_full_name(event)
             response = event.text.lower()
             if event.user_id not in states:
                 states[event.user_id] = "menu"
