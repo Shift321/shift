@@ -6,6 +6,8 @@ from sql import cursor, conn
 from constants import texts, states, admins_id, medicines_message
 from vkapi import longpoll
 import asyncio
+from datetime import datetime
+from textwrap import wrap,fill
 
 
 def send_message(user_id,  message):                                                                               # функция , которая отвечает за отправление сообщения
@@ -140,9 +142,29 @@ def handle_menu(response, event):                                               
         states[event.user_id] = "edit"
         send_message(event.user_id, "Введите название препарата, который хотите изменить.")
     elif response == "поиск по ав":
+        cursor.execute("SELECT * FROM medicines order by active_substance ASC")
+        msg = ""
+        while True:
+            row = cursor.fetchone()
+            if row == None:
+                break
+            msg += f"{row[1]}\n"
+        messages = wrap(msg,4096,replace_whitespace=False)
+        for x in messages:
+            send_message(event.user_id,x)
         states[event.user_id] = "search_as"
         send_message(event.user_id, "Введите название действующего вещества,которое хотите посмотреть.")
     elif response == "поиск":
+        cursor.execute("SELECT * FROM medicines order by medicines_name ASC")
+        msg = ""
+        while True:
+            row = cursor.fetchone()
+            if row == None:
+                break
+            msg += f"{row[1]}\n"
+            messages = wrap(msg,4096,replace_whitespace=False)
+            for x in messages:
+                send_message(event.user_id,x)
         states[event.user_id] = "search"
         send_message(event.user_id, "Введите название препарата ,которое хотите посмотреть.")
     elif response == "удалить"and event.user_id in admins_id:
@@ -155,9 +177,10 @@ def handle_menu(response, event):                                               
 async def chose_handler(event):
     if event.from_user and not event.from_me:
         if event.type == VkEventType.MESSAGE_NEW:
+            print("Сообщение пришло в :" + str(datetime.strftime(datetime.now(),"%H:%M:%S")))
+            print('Текст сообщения:' + str(event.text))
             response = event.text.lower()
             if event.user_id not in states:
-                print(event.user_id)
                 states[event.user_id] = "menu"
             if response == "отмена":
                 states[event.user_id] = "menu"
@@ -172,7 +195,7 @@ async def chose_handler(event):
                 handle_edittion(event)
             elif states[event.user_id] == "search_as":                                              # функция для поиска по активному веществу
                 handle_search_as(event)
-            elif states[event.user_id] == "search":                                                 # функция для поиска по названию препарата
+            elif states[event.user_id] == "search":                                              # функция для поиска по названию препарата
                 handle_search(event)
             elif states[event.user_id] == "delete":                                                 # функция для удаления препарата по названию
                 handle_delete(event)
@@ -180,5 +203,10 @@ async def chose_handler(event):
 
 def app():
     while True:                                                                                                    # Основной цикл
+        try:
+            longpoll.listen()
+        except Exception:
+            print(Exception)
+            continue
         for event in longpoll.listen():
             asyncio.run(chose_handler(event))
