@@ -4,7 +4,7 @@ from vk_api.longpoll import VkEventType
 import re
 from sql import cursor, conn
 from constants import texts, states, admins_id, medicines_message
-from vkapi import longpoll,get_full_name
+from vkapi import longpoll
 import asyncio
 from datetime import datetime
 
@@ -24,8 +24,10 @@ def create_keyboard(user_id):                                                   
     keyboard = VkKeyboard(one_time=False)
     if states[user_id] == "menu":
         keyboard.add_button('Поиск', color=VkKeyboardColor.PRIMARY)
-        keyboard.add_button('Поиск по ав', color=VkKeyboardColor.PRIMARY)
         keyboard.add_button('Cписок', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_line()
+        keyboard.add_button('Поиск по ав', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_button('Cписок по ав', color=VkKeyboardColor.PRIMARY)
         if user_id in admins_id:
                 keyboard.add_line()
                 keyboard.add_button('Запись', color=VkKeyboardColor.PRIMARY)
@@ -151,13 +153,20 @@ def handle_menu(response, event):                                               
     elif response == "удалить"and event.user_id in admins_id:
         states[event.user_id] = "delete"
         send_message(event.user_id, "Введите название препарата ,которое хотите удалить.")    
-    elif response == "cписок":
+    elif response == "cписок по ав":
         cursor.execute("SELECT active_substance FROM medicines order by active_substance ASC")
         names = cursor.fetchall()
         msg = ""
         for x in names:
             msg += ''.join(x)+"\n"
         send_message(event.user_id,msg)
+    elif response == "cписок":
+        cursor.execute("SELECT medicines_name FROM medicines order by medicines_name ASC")
+        names = cursor.fetchall()
+        msg = ""
+        for x in names:
+            msg += ''.join(x)+"\n"
+        send_message(event.user_id,msg)    
     else:
         send_message(event.user_id,texts["exist"]) 
 
@@ -165,9 +174,6 @@ def handle_menu(response, event):                                               
 async def chose_handler(event):
     if event.from_user and not event.from_me:
         if event.type == VkEventType.MESSAGE_NEW:
-            # print("Сообщение пришло в :" + str(datetime.strftime(datetime.now(),"%H:%M:%S")))
-            # print('Текст сообщения:' + str(event.text))
-            # get_full_name(event)
             response = event.text.lower()
             if event.user_id not in states:
                 states[event.user_id] = "menu"
@@ -191,11 +197,10 @@ async def chose_handler(event):
     
 
 def app():
-    while True:                                                                                                    # Основной цикл
+    while True:                                                                                        # Основной цикл
         try:
-            longpoll.listen()
+            for event in longpoll.listen():
+                asyncio.run(chose_handler(event)) 
         except Exception:
-            print(Exception)
+            print(Exception.__class__)
             continue
-        for event in longpoll.listen():
-            asyncio.run(chose_handler(event))
