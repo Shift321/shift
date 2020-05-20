@@ -106,7 +106,7 @@ def handle_search(event):                                                       
     cursor.execute(search_as_sql)
     text = cursor.fetchall()
     if event.text == '':
-        send_message(event.user_id, text["exist"])
+        send_message(event.user_id, texts["exist"])
         return
     else:
         if text == []:
@@ -171,7 +171,7 @@ def handle_menu(response, event):                                               
         send_message(event.user_id,texts["exist"]) 
 
 
-async def chose_handler(event):
+def chose_handler(event):
     if event.from_user and not event.from_me:
         if event.type == VkEventType.MESSAGE_NEW:
             response = event.text.lower()
@@ -203,4 +203,5 @@ def app():
                 asyncio.run(chose_handler(event)) 
         except Exception:
             print(Exception.__class__)
+            print("Ошибка произошла в :"+ str(datetime.strftime(datetime.now(),"%H:%M:%S")))
             continue

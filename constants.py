@@ -26,4 +26,5 @@ texts = {
 }
 admins_id = {386837528, 422345800,79872857}
 states = {}
+states_telegram = {} 
 medicines_message = {}
